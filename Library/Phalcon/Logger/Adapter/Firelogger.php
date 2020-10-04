@@ -1,4 +1,22 @@
 <?php
+
+/*
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Richard Laffers <rlaffers@gmail.com>                          |
+  +------------------------------------------------------------------------+
+*/
+
 namespace Phalcon\Logger\Adapter;
 
 use Phalcon\Logger\Formatter\Firelogger as FireloggerFormatter;
@@ -9,10 +27,7 @@ use Phalcon\Logger\AdapterInterface;
  * Phalcon\Logger\Adapter\Firelogger
  * Sends messages to the Firelogger extension in Firefox.
  *
- * @link    http://firelogger.binaryage.com/
- * @version 0.1
- * @author  Richard Laffers <rlaffers@gmail.com>
- * @license The BSD 3-Clause License {@link http://opensource.org/licenses/BSD-3-Clause}
+ * @link http://firelogger.binaryage.com/
  */
 class Firelogger extends LoggerAdapter implements AdapterInterface
 {
@@ -87,7 +102,7 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
             'password'     => null,
             'checkVersion' => true,
             'traceable'    => false,
-            'triggerError' => true
+            'triggerError' => true,
         ];
 
         if ($name) {
@@ -97,7 +112,12 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
         $this->options = array_merge($defaults, $options);
         $this->enabled = $this->checkPassword() && $this->checkVersion();
 
-        register_shutdown_function([$this, 'commit']);
+        register_shutdown_function(
+            [
+                $this,
+                'commit',
+            ]
+        );
     }
 
     /**
@@ -141,11 +161,22 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
         if (!$this->enabled) {
             return;
         }
+
         $trace = null;
+
         if ($this->options['traceable']) {
             $trace = debug_backtrace();
         }
-        $log = $this->getFormatter()->format($message, $type, $time, $context, $trace, count($this->logs));
+
+        $log = $this->getFormatter()->format(
+            $message,
+            $type,
+            $time,
+            $context,
+            $trace,
+            count($this->logs)
+        );
+
         $this->logs[] = $log;
 
         // flush if this is not transaction
@@ -171,6 +202,7 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
     {
         // flush the previous transaction if there is any
         $this->commit();
+
         // start a new transaction
         $this->isTransaction = true;
     }
@@ -237,10 +269,14 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
 
         if (isset($_SERVER['HTTP_X_FIRELOGGERAUTH'])) {
             $clientHash = $_SERVER['HTTP_X_FIRELOGGERAUTH'];
-            $serverHash = md5("#FireLoggerPassword#" . $this->options['password'] . "#");
+
+            $serverHash = md5(
+                "#FireLoggerPassword#" . $this->options['password'] . "#"
+            );
+
             if ($clientHash !== $serverHash) { // passwords do not match
                 $this->enabled = false;
-                
+
                 if ($this->options['triggerError']) {
                     trigger_error(
                         "FireLogger passwords do not match. Have you specified correct password FireLogger extension?"
@@ -266,11 +302,13 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
     {
         if (!$this->options['checkVersion']) {
             $this->enabled = true;
+
             return true;
         }
 
         if (!isset($_SERVER['HTTP_X_FIRELOGGER'])) {
             $this->enabled = false;
+
             return false;
         }
 
@@ -285,10 +323,12 @@ class Firelogger extends LoggerAdapter implements AdapterInterface
             );
 
             $this->enabled = false;
+
             return false;
         }
 
         $this->enabled = true;
+
         return true;
     }
 }

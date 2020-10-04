@@ -7,8 +7,7 @@ use Phalcon\Acl\Adapter\Memory as MemoryAdapter;
 use Phalcon\Acl\Factory\Memory as MemoryFactory;
 use Phalcon\Config\Adapter\Ini;
 use Phalcon\Config;
-use Codeception\TestCase\Test;
-use UnitTester;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 
 /**
  * \Phalcon\Test\Acl\Factory\MemoryTest
@@ -29,43 +28,43 @@ use UnitTester;
  */
 class MemoryTest extends Test
 {
-    /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
-    /**
-     * executed before each test
-     */
-    protected function _before()
-    {
-    }
-
-    /**
-     * executed after each test
-     */
-    protected function _after()
-    {
-    }
-
     public function testFactoryShouldCreateMemoryAclObjectFromAclConfigurationWithAllOptions()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
-        $factory = new MemoryFactory();
-        $acl = $factory->create($config->get('acl'));
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
 
-        $this->assertInstanceOf('Phalcon\Acl\Adapter\Memory', $acl);
+        $factory = new MemoryFactory();
+
+        $acl = $factory->create(
+            $config->get('acl')
+        );
+
+        $this->assertInstanceOf(
+            MemoryAdapter::class,
+            $acl
+        );
+
         $this->assertAclIsConfiguredAsExpected($acl, $config);
     }
 
     public function testFactoryShouldWorkIfCreatedFromConfigPHPArray()
     {
-        $config = new Config(include INCUBATOR_FIXTURES . 'Acl/acl.php');
-        $factory = new MemoryFactory();
-        $acl = $factory->create($config->get('acl'));
+        $config = new Config(
+            include INCUBATOR_FIXTURES . 'Acl/acl.php'
+        );
 
-        $this->assertInstanceOf('Phalcon\Acl\Adapter\Memory', $acl);
+        $factory = new MemoryFactory();
+
+        $acl = $factory->create(
+            $config->get('acl')
+        );
+
+        $this->assertInstanceOf(
+            MemoryAdapter::class,
+            $acl
+        );
+
         $this->assertAclIsConfiguredAsExpected($acl, $config);
     }
 
@@ -75,10 +74,17 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfDefaultActionIsMissing()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
         unset($config->acl->defaultAction);
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     /**
@@ -87,10 +93,17 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfResourceOptionIsMissing()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
         unset($config->acl->resource);
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     /**
@@ -99,11 +112,23 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfActionsKeyIsMissing()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
-        unset($config->acl->resource->index->actions);
-        unset($config->acl->role->guest->allow->index->actions[0]);
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
+        unset(
+            $config->acl->resource->index->actions
+        );
+
+        unset(
+            $config->acl->role->guest->allow->index->actions[0]
+        );
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     /**
@@ -112,10 +137,17 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfRoleKeyIsMissing()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
         unset($config->acl->role);
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     /**
@@ -124,10 +156,25 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfWrongMethodIsSet()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
-        $config->acl->role->user->wrongmethod = new Config(['test' => ['actions' => ['test']]]);
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
+        $config->acl->role->user->wrongmethod = new Config(
+            [
+                'test' => [
+                    'actions' => [
+                        'test',
+                    ],
+                ],
+            ]
+        );
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     /**
@@ -140,10 +187,23 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfWrongNoActionIsSet($action)
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
-        $config->acl->role->user->wrongmethod = new Config(['test' => ['actions' => $action]]);
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
+        $config->acl->role->user->wrongmethod = new Config(
+            [
+                'test' => [
+                    'actions' => $action,
+                ],
+            ]
+        );
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     public function invalidActionProvider()
@@ -154,7 +214,10 @@ class MemoryTest extends Test
             'null'     => [null],
             'bool'     => [false],
             'object'   => [new \stdClass],
-            'callable' => [function () {}],
+            'callable' => [
+                function () {
+                },
+            ],
         ];
     }
 
@@ -165,44 +228,111 @@ class MemoryTest extends Test
      */
     public function testFactoryShouldThrowExceptionIfNonExistentInheritRoleIsSet()
     {
-        $config = new Ini(INCUBATOR_FIXTURES . 'Acl/acl.ini');
+        $config = new Ini(
+            INCUBATOR_FIXTURES . 'Acl/acl.ini'
+        );
+
         $config->acl->role->user->inherit = 'nonexistentrole';
+
         $factory = new MemoryFactory();
-        $factory->create($config->get('acl'));
+
+        $factory->create(
+            $config->get('acl')
+        );
     }
 
     protected function assertAclIsConfiguredAsExpected(MemoryAdapter $acl, Config $config)
     {
         // assert default action
-        $this->assertEquals(Acl::DENY, $acl->getDefaultAction());
+        $this->assertEquals(
+            Acl::DENY,
+            $acl->getDefaultAction()
+        );
+
+
 
         // assert resources
         $resources = $acl->getResources();
+
         $this->assertInternalType('array', $resources);
+
         $indexResource = $resources[0];
         $testResource = $resources[1];
-        $this->assertEquals('index', $indexResource->getName());
-        $this->assertEquals('test', $testResource->getName());
-        $this->assertEquals($config->acl->resource->index->description, $indexResource->getDescription());
-        $this->assertEquals($config->acl->resource->test->description, $testResource->getDescription());
+
+        $this->assertEquals(
+            'index',
+            $indexResource->getName()
+        );
+
+        $this->assertEquals(
+            'test',
+            $testResource->getName()
+        );
+
+        $this->assertEquals(
+            $config->acl->resource->index->description,
+            $indexResource->getDescription()
+        );
+
+        $this->assertEquals(
+            $config->acl->resource->test->description,
+            $testResource->getDescription()
+        );
+
+
 
         // assert roles
         $roles = $acl->getRoles();
-        $this->assertInternalType('array', $roles);
+
+        $this->assertInternalType(
+            'array',
+            $roles
+        );
+
         $guestRole = $roles[0];
         $userRole = $roles[1];
-        $this->assertEquals('guest', $guestRole->getName());
-        $this->assertEquals('user', $userRole->getName());
-        $this->assertEquals($config->acl->role->guest->description, $guestRole->getDescription());
-        $this->assertEquals($config->acl->role->user->description, $userRole->getDescription());
+
+        $this->assertEquals(
+            'guest',
+            $guestRole->getName()
+        );
+
+        $this->assertEquals(
+            'user',
+            $userRole->getName()
+        );
+
+        $this->assertEquals(
+            $config->acl->role->guest->description,
+            $guestRole->getDescription()
+        );
+
+        $this->assertEquals(
+            $config->acl->role->user->description,
+            $userRole->getDescription()
+        );
+
+
 
         // assert guest rules
-        $this->assertTrue($acl->isAllowed('guest', 'index', 'index'));
-        $this->assertFalse($acl->isAllowed('guest', 'test', 'index'));
+        $this->assertTrue(
+            $acl->isAllowed('guest', 'index', 'index')
+        );
+
+        $this->assertFalse(
+            $acl->isAllowed('guest', 'test', 'index')
+        );
+
+
 
         // assert user rules
         // inherited from guest
-        $this->assertTrue($acl->isAllowed('user', 'index', 'index'));
-        $this->assertTrue($acl->isAllowed('user', 'test', 'index'));
+        $this->assertTrue(
+            $acl->isAllowed('user', 'index', 'index')
+        );
+
+        $this->assertTrue(
+            $acl->isAllowed('user', 'test', 'index')
+        );
     }
 }

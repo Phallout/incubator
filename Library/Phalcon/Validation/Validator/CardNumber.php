@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -21,7 +22,7 @@ namespace Phalcon\Validation\Validator;
 use Phalcon\Validation;
 use Phalcon\Validation\Message;
 use Phalcon\Validation\Validator;
-use Phalcon\Validation\Exception;
+use Phalcon\Validation\Exception as ValidationException;
 
 /**
  * Phalcon\Mvc\Model\Validator\CardNumber
@@ -54,7 +55,12 @@ class CardNumber extends Validator
      */
     public function validate(Validation $validation, $attribute)
     {
-        $value = preg_replace('/[^\d]/', '', $validation->getValue($attribute));
+        $value = preg_replace(
+            '/[^\d]/',
+            '',
+            $validation->getValue($attribute)
+        );
+
         $message = ($this->hasOption('message')) ? $this->getOption('message') : 'Credit card number is invalid';
 
         if ($this->hasOption('type')) {
@@ -65,20 +71,30 @@ class CardNumber extends Validator
                     $issuer = substr($value, 0, 2);
                     $result = (true === in_array($issuer, [34, 37]));
                     break;
+ 
                 case CardNumber::MASTERCARD:
                     $issuer = substr($value, 0, 2);
                     $result = (true === in_array($issuer, [51, 52, 53, 54, 55]));
                     break;
+ 
                 case CardNumber::VISA:
                     $issuer = $value[0];
                     $result = ($issuer == 4);
                     break;
+ 
                 default:
-                    throw new Exception('Incorrect type specifier');
+                    throw new ValidationException('Incorrect type specifier');
             }
 
             if (false === $result) {
-                $validation->appendMessage(new Message($message, $attribute, 'CardNumber'));
+                $validation->appendMessage(
+                    new Message(
+                        $message,
+                        $attribute,
+                        'CardNumber'
+                    )
+                );
+
                 return false;
             }
         }
@@ -91,15 +107,24 @@ class CardNumber extends Validator
                 $temp = $value[$i];
             } else {
                 $temp = $value[$i] * 2;
+
                 if ($temp > 9) {
                     $temp -= 9;
                 }
             }
+
             $checkSum += $temp;
         }
 
         if (($checkSum % 10) != 0) {
-            $validation->appendMessage(new Message($message, $attribute, 'CardNumber'));
+            $validation->appendMessage(
+                new Message(
+                    $message,
+                    $attribute,
+                    'CardNumber'
+                )
+            );
+
             return false;
         }
 

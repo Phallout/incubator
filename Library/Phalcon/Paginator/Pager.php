@@ -1,14 +1,22 @@
 <?php
-/**
- * Phalcon Framework
- * This source file is subject to the New BSD License that is bundled
- * with this package in the file docs/LICENSE.txt.
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@phalconphp.com so we can send you a copy immediately.
- *
- * @author Nikita Vershinin <endeveit@gmail.com>
- */
+
+/*
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Nikita Vershinin <endeveit@gmail.com>                         |
+  +------------------------------------------------------------------------+
+*/
+
 namespace Phalcon\Paginator;
 
 /**
@@ -142,7 +150,7 @@ class Pager implements \IteratorAggregate, \Countable
     public function getLayout()
     {
         if (!array_key_exists('layoutClass', $this->options)) {
-            $this->options['layoutClass'] = 'Phalcon\Paginator\Pager\Layout';
+            $this->options['layoutClass'] = \Phalcon\Paginator\Pager\Layout::class;
         }
 
         if (!array_key_exists('urlMask', $this->options)) {
@@ -154,11 +162,21 @@ class Pager implements \IteratorAggregate, \Countable
         $rangeLength = $this->getRangeLength();
 
         if (!class_exists($rangeClass)) {
-            throw new \RuntimeException(sprintf('Unable to find range class "%s"', $rangeClass));
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to find range class "%s"',
+                    $rangeClass
+                )
+            );
         }
 
         if (!class_exists($this->options['layoutClass'])) {
-            throw new \RuntimeException(sprintf('Unable to find layout "%s"', $this->options['layoutClass']));
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to find layout "%s"',
+                    $this->options['layoutClass']
+                )
+            );
         }
 
         return new $this->options['layoutClass'](
@@ -175,9 +193,13 @@ class Pager implements \IteratorAggregate, \Countable
      */
     public function getPagesInRange()
     {
-        /** @var \Phalcon\Paginator\Pager\Range $range */
         $rangeClass = $this->getRangeClass();
-        $range      = new $rangeClass($this, $this->getRangeLength());
+
+        /** @var \Phalcon\Paginator\Pager\Range $range */
+        $range = new $rangeClass(
+            $this,
+            $this->getRangeLength()
+        );
 
         return $range->getRange();
     }
@@ -190,7 +212,9 @@ class Pager implements \IteratorAggregate, \Countable
     public function getIterator()
     {
         if (!$this->paginateResult->items instanceof \Iterator) {
-            return new \ArrayIterator($this->paginateResult->items);
+            return new \ArrayIterator(
+                $this->paginateResult->items
+            );
         }
 
         return $this->paginateResult->items;
@@ -203,7 +227,9 @@ class Pager implements \IteratorAggregate, \Countable
      */
     public function count()
     {
-        return intval($this->paginateResult->total_items);
+        return intval(
+            $this->paginateResult->total_items
+        );
     }
 
     /**
@@ -214,7 +240,7 @@ class Pager implements \IteratorAggregate, \Countable
     protected function getRangeClass()
     {
         if (!array_key_exists('rangeClass', $this->options)) {
-            $this->options['rangeClass'] = 'Phalcon\Paginator\Pager\Range\Sliding';
+            $this->options['rangeClass'] = \Phalcon\Paginator\Pager\Range\Sliding::class;
         }
 
         return $this->options['rangeClass'];

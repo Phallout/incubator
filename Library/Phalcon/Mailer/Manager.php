@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -24,6 +25,15 @@ use Phalcon\Mvc\View;
 
 /**
  * Class Manager
+ *
+ *  *<code>
+ * $mailer = \Phalcon\Mailer\Manager($config);
+ *
+ * if need to set view engines
+ * $mailer->setViewEngines([
+ *      '.phtml' => 'Phalcon\Mvc\View\Engine\Php'
+ * ]);
+ *</code>
  *
  * @package Phalcon\Manager
  */
@@ -48,6 +58,11 @@ class Manager extends Component
      * @var \Phalcon\Mvc\View\Simple
      */
     protected $view;
+
+    /**
+     * @var array
+     */
+    protected $viewEngines = null;
 
     /**
      * Create a new MailerManager component using $config for configuring
@@ -77,10 +92,18 @@ class Manager extends Component
         }
 
         /** @var $message Message */
-        $message = $this->getDI()->get('\Phalcon\Mailer\Message', [$this]);
+        $message = $this->getDI()->get(
+            '\Phalcon\Mailer\Message',
+            [
+                $this,
+            ]
+        );
 
         if (($from = $this->getConfig('from'))) {
-            $message->from($from['email'], isset($from['name']) ? $from['name'] : null);
+            $message->from(
+                $from['email'],
+                isset($from['name']) ? $from['name'] : null
+            );
         }
 
         if ($eventsManager) {
@@ -109,7 +132,11 @@ class Manager extends Component
     public function createMessageFromView($view, $params = [], $viewsDir = null)
     {
         $message = $this->createMessage();
-        $message->content($this->renderView($view, $params, $viewsDir), $message::CONTENT_TYPE_HTML);
+
+        $message->content(
+            $this->renderView($view, $params, $viewsDir),
+            $message::CONTENT_TYPE_HTML
+        );
 
         return $message;
     }
@@ -142,6 +169,16 @@ class Manager extends Component
         } else {
             return $email;
         }
+    }
+
+    /**
+     * set value of $viewEngines
+     *
+     * @param array $engines
+     */
+    public function setViewEngines(array $engines)
+    {
+        $this->viewEngines = $engines;
     }
 
     /**
@@ -185,7 +222,12 @@ class Manager extends Component
                 break;
 
             default:
-                throw new \InvalidArgumentException(sprintf('Driver-mail "%s" is not supported', $driver));
+                throw new \InvalidArgumentException(
+                    sprintf(
+                        'Driver-mail "%s" is not supported',
+                        $driver
+                    )
+                );
         }
     }
 
@@ -206,12 +248,21 @@ class Manager extends Component
             ->setPort($config['port']);
 
         if (isset($config['encryption'])) {
-            $transport->setEncryption($config['encryption']);
+            $transport->setEncryption(
+                $config['encryption']
+            );
         }
 
         if (isset($config['username'])) {
-            $transport->setUsername($this->normalizeEmail($config['username']));
-            $transport->setPassword($config['password']);
+            $transport->setUsername(
+                $this->normalizeEmail(
+                    $config['username']
+                )
+            );
+
+            $transport->setPassword(
+                $config['password']
+            );
         }
 
         return $transport;
@@ -289,7 +340,12 @@ class Manager extends Component
      */
     protected function registerSwiftMailer()
     {
-        $this->mailer = $this->getDI()->get('\Swift_Mailer', [$this->transport]);
+        $this->mailer = $this->getDI()->get(
+            '\Swift_Mailer',
+            [
+                $this->transport,
+            ]
+        );
     }
 
     /**
@@ -337,8 +393,8 @@ class Manager extends Component
             $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
             $view->setViewsDir($viewsDir);
 
-            if ($engines = $viewApp->getRegisteredEngines()) {
-                $view->registerEngines($engines);
+            if ($this->viewEngines) {
+                $view->registerEngines($this->viewEngines);
             }
 
             $this->view = $view;

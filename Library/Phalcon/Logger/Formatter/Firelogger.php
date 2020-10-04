@@ -1,19 +1,35 @@
 <?php
+
+/*
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Richard Laffers <rlaffers@gmail.com>                          |
+  +------------------------------------------------------------------------+
+*/
+
 namespace Phalcon\Logger\Formatter;
 
-use \Phalcon\Logger\Exception;
-use \Phalcon\Logger as Logger;
+use Phalcon\Logger\Formatter;
+use Phalcon\Logger as Logger;
+use Phalcon\Logger\FormatterInterface;
 
 /**
  * Phalcon\Logger\Formatter\Firelogger
  * Formats messages to be sent to Firelogger
  *
- * @link    http://firelogger.binaryage.com/
- * @version 0.1
- * @author  Richard Laffers <rlaffers@gmail.com>
- * @license The BSD 3-Clause License {@link http://opensource.org/licenses/BSD-3-Clause}
+ * @link http://firelogger.binaryage.com/
  */
-class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\FormatterInterface
+class Firelogger extends Formatter implements FormatterInterface
 {
     /**
      * Holds name of this logger.
@@ -93,17 +109,21 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
             case Logger::CRITICAL:
                 // emergence, critical
                 return 'critical';
+
             case Logger::ALERT:
             case Logger::ERROR:
                 // error, alert
                 return 'error';
+
             case Logger::WARNING:
                 // warning
                 return 'warning';
+
             case Logger::NOTICE:
             case Logger::INFO:
                 // info, notice
                 return 'info';
+
             case Logger::DEBUG:
             case Logger::CUSTOM:
             case Logger::SPECIAL:
@@ -144,7 +164,7 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
             'order'     => $order, // PHP is really fast, timestamp has insufficient resolution for log records ordering
             'time'      => gmdate('H:i:s', (int) $timestamp) . '.000',
             'template'  => $message,
-            'message'   => $message
+            'message'   => $message,
         ];
 
         if ($this->style) {
@@ -153,12 +173,16 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
 
         if (isset($exception)) {
             // exception with backtrace
-            $traceInfo = $this->extractTrace($exception->getTrace());
+            $traceInfo = $this->extractTrace(
+                $exception->getTrace()
+            );
+
             $item['exc_info'] = [
                 $exception->getMessage(),
                 $exception->getFile(),
                 $traceInfo[0]
             ];
+
             $item['exc_frames'] = $traceInfo[1];
             $item['exc_text'] = get_class($exception);
             $item['template'] = $exception->getMessage();
@@ -175,11 +199,13 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
 
             if (isset($trace)) {
                 $traceInfo = $this->extractTrace($trace);
+
                 $item['exc_info'] = [
                     '',
                     '',
                     $traceInfo[0]
                 ];
+
                 $item['exc_frames'] = $traceInfo[1];
             }
 
@@ -206,7 +232,11 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
 
         if (is_string($var)) {
             // intentionally @
-            return @iconv('UTF-16', 'UTF-8//IGNORE', iconv($this->encoding, 'UTF-16//IGNORE', $var));
+            return @iconv(
+                'UTF-16',
+                'UTF-8//IGNORE',
+                iconv($this->encoding, 'UTF-16//IGNORE', $var)
+            );
         }
 
         if (is_array($var)) {
@@ -252,7 +282,10 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
 
                 foreach ($arr as $k => &$v) {
                     if ($k[0] === "\x00") {
-                        $k = substr($k, strrpos($k, "\x00") + 1);
+                        $k = substr(
+                            $k,
+                            strrpos($k, "\x00") + 1
+                        );
                     }
 
                     $res[$this->pickle($k)] = $this->pickle($v, $level + 1);
@@ -283,6 +316,7 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
     {
         $t = [];
         $f = [];
+
         foreach ($trace as $frame) {
             // prevent notices about invalid indices, wasn't able to google smart solution, PHP is dumb ass
             $frame += [
@@ -292,14 +326,14 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
                 'type'     => null,
                 'function' => null,
                 'object'   => null,
-                'args'     => null
+                'args'     => null,
             ];
 
             $t[] = [
                 $frame['file'],
                 $frame['line'],
                 $frame['class'] . $frame['type'] . $frame['function'],
-                $frame['object']
+                $frame['object'],
             ];
 
             $f[] = $frame['args'];
@@ -336,6 +370,9 @@ class Firelogger extends \Phalcon\Logger\Formatter implements \Phalcon\Logger\Fo
         $file = $trace[0]['file'];
         $line = $trace[0]['line'];
 
-        return [$file, $line];
+        return [
+            $file,
+            $line,
+        ];
     }
 }

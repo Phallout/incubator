@@ -1,21 +1,21 @@
 <?php
 
 /*
- +------------------------------------------------------------------------+
- | Phalcon Framework                                                      |
- +------------------------------------------------------------------------+
- | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
- +------------------------------------------------------------------------+
- | This source file is subject to the New BSD License that is bundled     |
- | with this package in the file docs/LICENSE.txt.                        |
- |                                                                        |
- | If you did not receive a copy of the license and are unable to         |
- | obtain it through the world-wide-web, please send an email             |
- | to license@phalconphp.com so we can send you a copy immediately.       |
- +------------------------------------------------------------------------+
- | Authors: Serghei Iakovlev <serghei@phalconphp.com>                     |
- +------------------------------------------------------------------------+
- */
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Serghei Iakovlev <serghei@phalconphp.com>                     |
+  +------------------------------------------------------------------------+
+*/
 
 namespace Phalcon\Cache\Backend;
 
@@ -34,21 +34,31 @@ use Phalcon\Cache\BackendInterface;
  * use Phalcon\Cache\Backend\Aerospike as CacheBackend;
  *
  * // Cache data for 2 days
- * $frontCache = new Data(['lifetime' => 172800]);
+ * $frontCache = new Data(
+ *     [
+ *         'lifetime' => 172800,
+ *     ]
+ * );
  *
  * // Create the Cache setting redis connection options
- * $cache = new CacheBackend($frontCache, [
- *     'hosts' => [
- *         ['addr' => '127.0.0.1', 'port' => 3000]
- *     ],
- *     'persistent' => true,
- *     'namespace'  => 'test',
- *     'prefix'     => 'cache_',
- *     'options'    => [
- *         \Aerospike::OPT_CONNECT_TIMEOUT => 1250,
- *         \Aerospike::OPT_WRITE_TIMEOUT   => 1500
+ * $cache = new CacheBackend(
+ *     $frontCache,
+ *     [
+ *         'hosts' => [
+ *             [
+ *                 'addr' => '127.0.0.1',
+ *                 'port' => 3000,
+ *             ],
+ *         ],
+ *         'persistent' => true,
+ *         'namespace'  => 'test',
+ *         'prefix'     => 'cache_',
+ *         'options'    => [
+ *             \Aerospike::OPT_CONNECT_TIMEOUT => 1250,
+ *             \Aerospike::OPT_WRITE_TIMEOUT   => 1500,
+ *         ]
  *     ]
- * ]);
+ * );
  *
  * // Cache arbitrary data
  * $cache->save('my-data', [1, 2, 3, 4, 5]);
@@ -97,6 +107,7 @@ class Aerospike extends Backend implements BackendInterface
 
         if (isset($options['namespace'])) {
             $this->namespace = $options['namespace'];
+
             unset($options['namespace']);
         }
 
@@ -106,6 +117,7 @@ class Aerospike extends Backend implements BackendInterface
 
         if (isset($options['set']) && !empty($options['set'])) {
             $this->set = $options['set'];
+
             unset($options['set']);
         }
 
@@ -119,11 +131,21 @@ class Aerospike extends Backend implements BackendInterface
             $opts = $options['options'];
         }
 
-        $this->db = new \Aerospike(['hosts' => $options['hosts']], $persistent, $opts);
+        $this->db = new \Aerospike(
+            [
+                'hosts' => $options['hosts'],
+            ],
+            $persistent,
+            $opts
+        );
 
         if (!$this->db->isConnected()) {
             throw new Exception(
-                sprintf('Aerospike failed to connect [%s]: %s', $this->db->errorno(), $this->db->error())
+                sprintf(
+                    'Aerospike failed to connect [%s]: %s',
+                    $this->db->errorno(),
+                    $this->db->error()
+                )
             );
         }
 
@@ -179,22 +201,23 @@ class Aerospike extends Backend implements BackendInterface
 
         $aKey = $this->buildKey($prefixedKey);
 
-        if (is_numeric($cachedContent)) {
-            $bins = ['value' => $cachedContent];
-        } else {
-            $bins = ['value' => $this->_frontend->beforeStore($cachedContent)];
-        }
+        $bins['value'] = $cachedContent;
 
         $status = $this->db->put(
             $aKey,
             $bins,
             $lifetime,
-            [\Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND]
+            [
+                \Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND,
+            ]
         );
 
         if (\Aerospike::OK != $status) {
             throw new Exception(
-                sprintf('Failed storing data in Aerospike: %s', $this->db->error()),
+                sprintf(
+                    'Failed storing data in Aerospike: %s',
+                    $this->db->error()
+                ),
                 $this->db->errorno()
             );
         }
@@ -229,13 +252,24 @@ class Aerospike extends Backend implements BackendInterface
         $keys = [];
         $globalPrefix = $this->_prefix;
 
-        $this->db->scan($this->namespace, $this->set, function ($record) use (&$keys, $prefix, $globalPrefix) {
-            $key = $record['key']['key'];
+        $this->db->scan(
+            $this->namespace,
+            $this->set,
+            function ($record) use (&$keys, $prefix, $globalPrefix) {
+                $key = $record['key']['key'];
 
-            if (empty($prefix) || 0 === strpos($key, $prefix)) {
-                $keys[] = preg_replace(sprintf('#^%s(.+)#u', preg_quote($globalPrefix)), '$1', $key);
+                if (empty($prefix) || 0 === strpos($key, $prefix)) {
+                    $keys[] = preg_replace(
+                        sprintf(
+                            '#^%s(.+)#u',
+                            preg_quote($globalPrefix)
+                        ),
+                        '$1',
+                        $key
+                    );
+                }
             }
-        });
+        );
 
         return $keys;
     }
@@ -261,11 +295,7 @@ class Aerospike extends Backend implements BackendInterface
 
         $cachedContent = $cache['bins']['value'];
 
-        if (is_numeric($cachedContent)) {
-            return $cachedContent;
-        }
-
-        return $this->_frontend->afterRetrieve($cachedContent);
+        return $cachedContent;
     }
 
     /**
@@ -288,6 +318,26 @@ class Aerospike extends Backend implements BackendInterface
     /**
      * {@inheritdoc}
      *
+     * @return boolean
+     */
+    public function flush()
+    {
+        $keys = $this->queryKeys();
+
+        $success = true;
+
+        foreach ($keys as $aKey) {
+            if (!$this->delete($aKey)) {
+                $success = false;
+            }
+        }
+
+        return $success;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
      * @param string $keyName
      * @param int    $lifetime
      * @return boolean
@@ -305,9 +355,8 @@ class Aerospike extends Backend implements BackendInterface
         }
 
         $aKey = $this->buildKey($prefixedKey);
-        $status = $this->db->get($aKey, $cache);
 
-        return $status == \Aerospike::OK;
+        return $this->db->exists($aKey, $cache) == \Aerospike::OK;
     }
 
     /**

@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -19,17 +20,17 @@
 
 namespace Phalcon\Acl\Adapter;
 
-use Phalcon\Db;
+use Phalcon\Acl;
+use Phalcon\Acl\Role;
 use Phalcon\Acl\Adapter;
 use Phalcon\Acl\Exception;
 use Phalcon\Acl\Resource;
-use Phalcon\Acl;
-use Phalcon\Acl\Role;
 use Phalcon\Acl\RoleInterface;
 
 /**
- * Phalcon\Acl\Adapter\Database
- * Manages ACL lists in memory
+ * \Phalcon\Acl\Adapter\Redis
+ *
+ * Manages ACL lists in Redis Database
  */
 class Redis extends Adapter
 {
@@ -80,18 +81,35 @@ class Redis extends Adapter
     public function addRole($role, $accessInherits = null)
     {
         if (is_string($role)) {
-            $role = new Role($role, ucwords($role) . ' Role');
+            $role = new Role(
+                $role,
+                ucwords($role) . ' Role'
+            );
         }
 
         if (!$role instanceof RoleInterface) {
-            throw new Exception('Role must be either an string or implement RoleInterface');
+            throw new Exception(
+                'Role must be either an string or implement RoleInterface'
+            );
         }
 
-        $this->redis->hMset('roles', [$role->getName() => $role->getDescription()]);
-        $this->redis->sAdd("accessList:$role:*:{$this->getDefaultAction()}}", "*");
+        $this->redis->hMset(
+            'roles',
+            [
+                $role->getName() => $role->getDescription(),
+            ]
+        );
+
+        $this->redis->sAdd(
+            "accessList:$role:*:{$this->getDefaultAction()}}",
+            "*"
+        );
 
         if ($accessInherits) {
-            $this->addInherit($role->getName(), $accessInherits);
+            $this->addInherit(
+                $role->getName(),
+                $accessInherits
+            );
         }
 
         return true;
@@ -99,6 +117,12 @@ class Redis extends Adapter
 
     /**
      * {@inheritdoc}
+     *
+     * Example:
+     * //Administrator implicitly inherits all descendants of 'consultor' unless explicity set in an Array
+     * <code>$acl->addInherit('administrator', new Phalcon\Acl\Role('consultor'));</code>
+     * <code>$acl->addInherit('administrator', 'consultor');</code>
+     * <code>$acl->addInherit('administrator', ['consultor', 'poweruser']);</code>
      *
      * @param  string $roleName
      * @param  \Phalcon\Acl\Role|string $roleToInherit
@@ -116,6 +140,25 @@ class Redis extends Adapter
 
         if ($roleToInherit instanceof Role) {
             $roleToInherit = $roleToInherit->getName();
+        }
+
+        /**
+         * Deep inherits Explicit tests array, Implicit recurs through inheritance chain
+         */
+        if (is_array($roleToInherit)) {
+            foreach ($roleToInherit as $roleToInherit) {
+                $this->redis->sAdd("rolesInherits:$roleName", $roleToInherit);
+            }
+
+            return true;
+        }
+
+        if ($this->redis->exists("rolesInherits:$roleToInherit")) {
+            $deeperInherits = $this->redis->sGetMembers("rolesInherits:$roleToInherit");
+
+            foreach ($deeperInherits as $deeperInherit) {
+                $this->addInherit($roleName, $deeperInherit);
+            }
         }
 
         $this->redis->sAdd("rolesInherits:$roleName", $roleToInherit);
@@ -140,12 +183,24 @@ class Redis extends Adapter
     public function addResource($resource, $accessList = null)
     {
         if (!is_object($resource)) {
-            $resource = new Resource($resource, ucwords($resource) . " Resource");
+            $resource = new Resource(
+                $resource,
+                ucwords($resource) . " Resource"
+            );
         }
-        $this->redis->hMset("resources", [$resource->getName() => $resource->getDescription()]);
+
+        $this->redis->hMset(
+            "resources",
+            [
+                $resource->getName() => $resource->getDescription(),
+            ]
+        );
 
         if ($accessList) {
-            return $this->addResourceAccess($resource->getName(), $accessList);
+            return $this->addResourceAccess(
+                $resource->getName(),
+                $accessList
+            );
         }
 
         return true;
@@ -162,12 +217,17 @@ class Redis extends Adapter
     public function addResourceAccess($resourceName, $accessList)
     {
         if (!$this->isResource($resourceName)) {
-            throw new Exception("Resource '" . $resourceName . "' does not exist in ACL");
+            throw new Exception(
+                "Resource '" . $resourceName . "' does not exist in ACL"
+            );
         }
 
         $accessList = (is_string($accessList)) ? explode(' ', $accessList) : $accessList;
         foreach ($accessList as $accessName) {
-            $this->redis->sAdd("resourcesAccesses:$resourceName", $accessName);
+            $this->redis->sAdd(
+                "resourcesAccesses:$resourceName",
+                $accessName
+            );
         }
 
         return true;
@@ -197,7 +257,10 @@ class Redis extends Adapter
 
     public function isResourceAccess($resource, $access)
     {
-        return $this->redis->sIsMember("resourcesAccesses:$resource", $access);
+        return $this->redis->sIsMember(
+            "resourcesAccesses:$resource",
+            $access
+        );
     }
 
     /**
@@ -255,10 +318,18 @@ class Redis extends Adapter
     public function dropResourceAccess($resource, $accessList)
     {
         if (!is_array($accessList)) {
-            $accessList = (array)$accessList;
+            $accessList = (array) $accessList;
         }
+
         array_unshift($accessList, "resourcesAccesses:$resource");
-        call_user_func_array([$this->redis, 'sRem'], $accessList);
+
+        call_user_func_array(
+            [
+                $this->redis,
+                'sRem',
+            ],
+            $accessList
+        );
     }
 
     /**
@@ -284,13 +355,28 @@ class Redis extends Adapter
     public function allow($role, $resource, $access, $func = null)
     {
         if ($role !== '*' && $resource !== '*') {
-            $this->allowOrDeny($role, $resource, $access, Acl::ALLOW);
+            $this->allowOrDeny(
+                $role,
+                $resource,
+                $access,
+                Acl::ALLOW
+            );
         }
+
         if ($role === '*' || empty($role)) {
-            $this->rolePermission($resource, $access, Acl::ALLOW);
+            $this->rolePermission(
+                $resource,
+                $access,
+                Acl::ALLOW
+            );
         }
+
         if ($resource === '*' || empty($resource)) {
-            $this->resourcePermission($role, $access, Acl::ALLOW);
+            $this->resourcePermission(
+                $role,
+                $access,
+                Acl::ALLOW
+            );
         }
     }
 
@@ -347,16 +433,28 @@ class Redis extends Adapter
      * @param  string $resourceName
      * @param  array|string $access
      * @param  mixed $func
-     * @return boolean
      */
     public function deny($role, $resource, $access, $func = null)
     {
         if ($role === '*' || empty($role)) {
-            $this->rolePermission($resource, $access, Acl::DENY);
+            $this->rolePermission(
+                $resource,
+                $access,
+                Acl::DENY
+            );
         } elseif ($resource === '*' || empty($resource)) {
-            $this->resourcePermission($role, $access, Acl::DENY);
+            $this->resourcePermission(
+                $role,
+                $access,
+                Acl::DENY
+            );
         } else {
-            $this->allowOrDeny($role, $resource, $access, Acl::DENY);
+            $this->allowOrDeny(
+                $role,
+                $resource,
+                $access,
+                Acl::DENY
+            );
         }
     }
 
@@ -384,6 +482,7 @@ class Redis extends Adapter
 
         if ($this->redis->exists("rolesInherits:$role")) {
             $rolesInherits = $this->redis->sMembers("rolesInherits:$role");
+
             foreach ($rolesInherits as $role) {
                 if ($this->redis->sIsMember("accessList:$role:$resource:" . Acl::ALLOW, $access)) {
                     return Acl::ALLOW;
@@ -439,20 +538,36 @@ class Redis extends Adapter
                     "Access '" . $accessName . "' does not exist in resource '" . $resourceName . "' in ACL"
                 );
             }
+
             $this->addResourceAccess($resourceName, $accessName);
         }
-        $this->redis->sAdd("accessList:$roleName:$resourceName:$action", $accessName);
+
+        $this->redis->sAdd(
+            "accessList:$roleName:$resourceName:$action",
+            $accessName
+        );
+
         $accessList = "accessList:$roleName:$resourceName";
 
         // remove first if exists
         foreach ([1, 2] as $act) {
-            $this->redis->sRem("$accessList:$act", $accessName);
-            $this->redis->sRem("$accessList:$act", "*");
+            $this->redis->sRem(
+                "$accessList:$act",
+                $accessName
+            );
+
+            $this->redis->sRem(
+                "$accessList:$act",
+                "*"
+            );
         }
 
         $this->redis->sAdd("$accessList:$action", $accessName);
 
-        $this->redis->sAdd("$accessList:{$this->getDefaultAction()}", "*");
+        $this->redis->sAdd(
+            "$accessList:{$this->getDefaultAction()}",
+            "*"
+        );
 
         return true;
     }
@@ -469,15 +584,27 @@ class Redis extends Adapter
     protected function allowOrDeny($roleName, $resourceName, $access, $action)
     {
         if (!$this->isRole($roleName)) {
-            throw new Exception('Role "' . $roleName . '" does not exist in the list');
+            throw new Exception(
+                'Role "' . $roleName . '" does not exist in the list'
+            );
         }
+
         if (!$this->isResource($resourceName)) {
-            throw new Exception('Resource "' . $resourceName . '" does not exist in the list');
+            throw new Exception(
+                'Resource "' . $resourceName . '" does not exist in the list'
+            );
         }
+
         $access = ($access === '*' || empty($access)) ? $this->getResourceAccess($resourceName) : $access;
+
         if (is_array($access)) {
             foreach ($access as $accessName) {
-                $this->setAccess($roleName, $resourceName, $accessName, $action);
+                $this->setAccess(
+                    $roleName,
+                    $resourceName,
+                    $accessName,
+                    $action
+                );
             }
         } else {
             $this->setAccess($roleName, $resourceName, $access, $action);

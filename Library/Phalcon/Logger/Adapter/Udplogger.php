@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -26,9 +27,6 @@ use Phalcon\Logger\AdapterInterface;
 /**
  * Phalcon\Logger\Adapter\Udplogger
  * Sends messages using UDP protocol to external server
- *
- * @version 0.1
- * @author  Vitaliy Panait <panait.vi@gmail.com>
  */
 class Udplogger extends LoggerAdapter implements AdapterInterface
 {
@@ -88,8 +86,19 @@ class Udplogger extends LoggerAdapter implements AdapterInterface
 
         $this->options = $options;
 
-        register_shutdown_function([$this, 'commit']);
-        register_shutdown_function([$this, 'close']);
+        register_shutdown_function(
+            [
+                $this,
+                'commit',
+            ]
+        );
+
+        register_shutdown_function(
+            [
+                $this,
+                'close',
+            ]
+        );
     }
 
     /**
@@ -143,6 +152,7 @@ class Udplogger extends LoggerAdapter implements AdapterInterface
     public function begin()
     {
         $this->commit();
+
         $this->isTransaction = true;
     }
 
@@ -158,6 +168,7 @@ class Udplogger extends LoggerAdapter implements AdapterInterface
         }
 
         $this->send();
+
         $this->isTransaction = false;
     }
 
@@ -176,7 +187,14 @@ class Udplogger extends LoggerAdapter implements AdapterInterface
             $this->socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
         }
 
-        socket_sendto($this->socket, $message, strlen($message), 0, $this->options['url'], $this->options['port']);
+        socket_sendto(
+            $this->socket,
+            $message,
+            strlen($message),
+            0,
+            $this->options['url'],
+            $this->options['port']
+        );
 
         $this->logs = [];
     }

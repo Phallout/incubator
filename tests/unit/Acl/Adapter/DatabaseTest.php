@@ -5,8 +5,7 @@ namespace Phalcon\Test\Acl\Adapter;
 use Phalcon\Db\AdapterInterface as DbAdapter;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Acl\Adapter\Database;
-use Codeception\TestCase\Test;
-use UnitTester;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 use ReflectionProperty;
 
 /**
@@ -28,45 +27,38 @@ use ReflectionProperty;
  */
 class DatabaseTest extends Test
 {
-    const ADAPTER_CLASS = 'Phalcon\Acl\Adapter\Database';
-
-    /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
-    /**
-     * executed before each test
-     */
-    protected function _before()
-    {
-    }
-
-    /**
-     * executed after each test
-     */
-    protected function _after()
-    {
-    }
+    const ADAPTER_CLASS = Database::class;
 
     protected function getConnection()
     {
-        return new Sqlite(['dbname' => 'tests/_output/sample.db']);
+        return new Sqlite(
+            [
+                'dbname' => 'tests/_output/sample.db',
+            ]
+        );
     }
 
     protected function assertProtectedPropertyEquals($propertyName, $tableName, DbAdapter $connection, Database $adapter)
     {
-        $property = new ReflectionProperty(self::ADAPTER_CLASS, $propertyName);
+        $property = new ReflectionProperty(
+            self::ADAPTER_CLASS,
+            $propertyName
+        );
+
         $property->setAccessible(true);
-        $this->assertEquals($connection->escapeIdentifier($tableName), $property->getValue($adapter));
+
+        $this->assertEquals(
+            $connection->escapeIdentifier($tableName),
+            $property->getValue($adapter)
+        );
     }
 
     /**
+     * @param array $options
+     *
      * @dataProvider incorrectDbProvider
      * @expectedException \Phalcon\Acl\Exception
      * @expectedExceptionMessage Parameter "db" is required and it must be an instance of Phalcon\Acl\AdapterInterface
-     * @param array $options
      */
     public function testShouldThrowExceptionIfDbIsMissingOrInvalid($options)
     {
@@ -88,9 +80,10 @@ class DatabaseTest extends Test
     }
 
     /**
-     * @dataProvider incorrectOptionsProvider
      * @param string $expected
      * @param array $options
+     *
+     * @dataProvider incorrectOptionsProvider
      */
     public function testShouldThrowExceptionWhenOptionsIsInvalid($expected, $options)
     {
@@ -142,16 +135,25 @@ class DatabaseTest extends Test
             'rolesInherits'     => 'roles_inherits',
             'resources'         => 'resources',
             'resourcesAccesses' => 'resources_accesses',
-            'accessList'        => 'access_list'
+            'accessList'        => 'access_list',
         ];
 
         $adapter = new Database($options);
-        $this->assertInstanceOf(self::ADAPTER_CLASS, $adapter);
+
+        $this->assertInstanceOf(
+            self::ADAPTER_CLASS,
+            $adapter
+        );
 
         unset($options['db']);
 
         foreach ($options as $property => $tableName) {
-            $this->assertProtectedPropertyEquals($property, $tableName, $connection, $adapter);
+            $this->assertProtectedPropertyEquals(
+                $property,
+                $tableName,
+                $connection,
+                $adapter
+            );
         }
     }
 }

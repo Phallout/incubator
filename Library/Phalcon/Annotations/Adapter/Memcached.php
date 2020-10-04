@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -100,19 +101,23 @@ class Memcached extends Base
     {
         if (null === $this->memcached) {
             $this->memcached = new CacheBackend(
-                new CacheFrontend(['lifetime' => $this->options['lifetime']]),
+                new CacheFrontend(
+                    [
+                        'lifetime' => $this->options['lifetime'],
+                    ]
+                ),
                 [
                     'servers' => [
                         [
-                            'host' => $this->options['host'],
-                            'port' => $this->options['port'],
-                            'weight' => $this->options['weight']
+                            'host'   => $this->options['host'],
+                            'port'   => $this->options['port'],
+                            'weight' => $this->options['weight'],
                         ],
                     ],
                     'client' => [
-                        MemcachedGeneric::OPT_HASH => MemcachedGeneric::HASH_MD5,
-                        MemcachedGeneric::OPT_PREFIX_KEY => $this->options['prefix']
-                    ]
+                        MemcachedGeneric::OPT_HASH       => MemcachedGeneric::HASH_MD5,
+                        MemcachedGeneric::OPT_PREFIX_KEY => $this->options['prefix'],
+                    ],
                 ]
             );
         }

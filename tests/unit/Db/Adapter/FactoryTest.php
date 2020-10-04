@@ -3,8 +3,7 @@
 namespace Phalcon\Test\Db\Adapter;
 
 use Phalcon\Db\Adapter\Factory as AdaptersFactory;
-use Codeception\TestCase\Test;
-use UnitTester;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 
 /**
  * \Phalcon\Test\Db\Adapter\FactoryTest
@@ -26,12 +25,6 @@ use UnitTester;
 class FactoryTest extends Test
 {
     /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
-    /**
      * @var array
      */
     protected $testable = [];
@@ -43,33 +36,65 @@ class FactoryTest extends Test
     {
         $this->testable = [
             'adapter'  => null,
-            'host'     => TEST_DB_HOST,
-            'username' => TEST_DB_USER,
-            'password' => TEST_DB_PASSWD,
-            'dbname'   => TEST_DB_NAME,
-            'charset'  => TEST_DB_CHARSET,
+            'host'     => env('TEST_DB_HOST', '127.0.0.1'),
+            'username' => env('TEST_DB_USER', 'incubator'),
+            'password' => env('TEST_DB_PASSWD', 'secret'),
+            'dbname'   => env('TEST_DB_NAME', 'incubator'),
+            'charset'  => env('TEST_DB_CHARSET', 'utf8'),
         ];
     }
 
     public function testLoadMysqlAdapter()
     {
         $this->testable['adapter'] = 'mysql';
+
         $adapter = AdaptersFactory::load($this->testable);
-        $this->assertTrue(is_object($adapter));
-        $this->assertInstanceOf('Phalcon\Db\Adapter\Pdo\Mysql', $adapter);
-        $this->assertInstanceOf('Phalcon\Db\Adapter\Pdo', $adapter);
-        $this->assertInstanceOf('Phalcon\Db\Adapter', $adapter);
+
+        $this->assertTrue(
+            is_object($adapter)
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter\Pdo\Mysql::class,
+            $adapter
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter\Pdo::class,
+            $adapter
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter::class,
+            $adapter
+        );
     }
 
     public function testLoadSqliteAdapter()
     {
         $this->testable['adapter'] = 'sqlite';
         $this->testable['dbname'] = INCUBATOR_FIXTURES . 'Db/sqlite.db';
+
         $adapter = AdaptersFactory::load($this->testable);
-        $this->assertTrue(is_object($adapter));
-        $this->assertInstanceOf('Phalcon\Db\Adapter\Pdo\Sqlite', $adapter);
-        $this->assertInstanceOf('Phalcon\Db\Adapter\Pdo', $adapter);
-        $this->assertInstanceOf('Phalcon\Db\Adapter', $adapter);
+
+        $this->assertTrue(
+            is_object($adapter)
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter\Pdo\Sqlite::class,
+            $adapter
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter\Pdo::class,
+            $adapter
+        );
+
+        $this->assertInstanceOf(
+            \Phalcon\Db\Adapter::class,
+            $adapter
+        );
     }
 
     /**
@@ -79,6 +104,7 @@ class FactoryTest extends Test
     public function testMissingConfigKeyAdapter()
     {
         unset($this->testable['adapter']);
+
         AdaptersFactory::load($this->testable);
     }
 
@@ -98,6 +124,7 @@ class FactoryTest extends Test
     public function testLoadUnsupportedAdapter()
     {
         $this->testable['adapter'] = 'drizzle';
+
         AdaptersFactory::load($this->testable);
     }
 }

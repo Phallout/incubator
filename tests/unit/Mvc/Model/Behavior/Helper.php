@@ -10,7 +10,7 @@ use CategoriesManyRoots;
 use Phalcon\DiInterface;
 use Codeception\Specify;
 use Phalcon\Mvc\Model\Manager;
-use Codeception\TestCase\Test;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 use Phalcon\Mvc\Model\Metadata;
 use Phalcon\Db\Adapter\Pdo\Mysql;
 use Phalcon\Mvc\Model\Behavior\NestedSet as NestedSetBehavior;
@@ -61,12 +61,12 @@ class Helper extends Test
         $di->setShared('modelsManager', new Manager());
         $di->setShared('db', function () {
             return new Mysql([
-                'host' => TEST_DB_HOST,
-                'port' => TEST_DB_PORT,
-                'username' => TEST_DB_USER,
-                'password' => TEST_DB_PASSWD,
-                'dbname' => TEST_DB_NAME,
-                'charset' => TEST_DB_CHARSET,
+                'host'     => env('TEST_DB_HOST', '127.0.0.1'),
+                'username' => env('TEST_DB_USER', 'incubator'),
+                'password' => env('TEST_DB_PASSWD', 'secret'),
+                'dbname'   => env('TEST_DB_NAME', 'incubator'),
+                'charset'  => env('TEST_DB_CHARSET', 'utf8'),
+                'port'     => env('TEST_DB_PORT', 3306),
             ]);
         });
 
@@ -91,7 +91,11 @@ class Helper extends Test
 
     protected function getProperty($propertyName, NestedSetBehavior $behavior)
     {
-        $property = new ReflectionProperty(get_class($behavior), $propertyName);
+        $property = new ReflectionProperty(
+            get_class($behavior),
+            $propertyName
+        );
+
         $property->setAccessible(true);
 
         return $property->getValue($behavior);
@@ -129,7 +133,11 @@ class Helper extends Test
             $order = 'lft';
         }
 
-        $categories = CategoriesManyRoots::find(['order' => $order]);
+        $categories = CategoriesManyRoots::find(
+            [
+                'order' => $order,
+            ]
+        );
 
         $result = [];
         foreach ($categories as $category) {
@@ -155,7 +163,12 @@ class Helper extends Test
 
         /** @var \Phalcon\Db\Result\Pdo $check1 */
         $check1 = $connection->query($sql);
-        $this->assertEquals(['cnt' => '0'], $check1->fetch(\PDO::FETCH_ASSOC));
+        $this->assertEquals(
+            [
+                'cnt' => '0',
+            ],
+            $check1->fetch(\PDO::FETCH_ASSOC)
+        );
 
 
         $sql = "SELECT COUNT(*) cnt, MIN(lft) min, MAX(rgt) max FROM categories";

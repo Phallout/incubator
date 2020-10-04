@@ -2,8 +2,7 @@
 
 namespace Phalcon\Test\Mvc\Model\MetaData;
 
-use Codeception\TestCase\Test;
-use UnitTester;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 use Mockery;
 
 /**
@@ -25,37 +24,23 @@ use Mockery;
  */
 class BaseTest extends Test
 {
-    /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
-    /**
-     * executed before each test
-     */
-    protected function _before()
-    {
-    }
-
-    /**
-     * executed after each test
-     */
-    protected function _after()
-    {
-    }
-
     public function testBaseMetaDataAdapterImplementsMetaDataInterface()
     {
         $mock = Mockery::mock('Phalcon\Mvc\Model\MetaData\Base');
 
-        $this->assertInstanceOf('Phalcon\Mvc\Model\MetaDataInterface', $mock);
+        $this->assertInstanceOf(
+            'Phalcon\Mvc\Model\MetaDataInterface',
+            $mock
+        );
     }
 
     public function testWincacheMetaDataAdapterImplementsMetaDataInterface()
     {
         $mock = Mockery::mock('Phalcon\Mvc\Model\MetaData\Wincache');
 
-        $this->assertInstanceOf('Phalcon\Mvc\Model\MetaDataInterface', $mock);
+        $this->assertInstanceOf(
+            'Phalcon\Mvc\Model\MetaDataInterface',
+            $mock
+        );
     }
 }

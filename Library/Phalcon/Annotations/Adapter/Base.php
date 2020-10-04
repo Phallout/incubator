@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -79,7 +80,9 @@ abstract class Base extends Adapter
      */
     public function read($key)
     {
-        return $this->getCacheBackend()->get(
+        $backend = $this->getCacheBackend();
+
+        return $backend->get(
             $this->prepareKey($key),
             $this->options['lifetime']
         );
@@ -93,7 +96,9 @@ abstract class Base extends Adapter
      */
     public function write($key, $data)
     {
-        $this->getCacheBackend()->save(
+        $backend = $this->getCacheBackend();
+
+        $backend->save(
             $this->prepareKey($key),
             $data,
             $this->options['lifetime']

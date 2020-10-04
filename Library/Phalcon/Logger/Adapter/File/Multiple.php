@@ -1,5 +1,22 @@
 <?php
 
+/*
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Richard Laffers <rlaffers@gmail.com>                          |
+  +------------------------------------------------------------------------+
+*/
+
 namespace Phalcon\Logger\Adapter\File;
 
 use Phalcon\Logger\Exception as LoggerException;
@@ -13,10 +30,6 @@ use Phalcon\Logger\AdapterInterface;
  * Adapter to save logs into multiple log files based on their level.
  *
  * TODO Implement transactions.
- *
- * @version 0.1
- * @author Richard Laffers <richard.laffers@movys.sk>
- * @license The BSD 3-Clause License {@link http://opensource.org/licenses/BSD-3-Clause}
  */
 class Multiple extends FileLogger implements AdapterInterface
 {
@@ -47,18 +60,22 @@ class Multiple extends FileLogger implements AdapterInterface
     {
         $path = rtrim($path, ' ' . \DIRECTORY_SEPARATOR);
         if (!file_exists($path) || !is_dir($path)) {
-            throw new LoggerException('Directory ' . $path . ' does not exist!');
+            throw new LoggerException(
+                'Directory ' . $path . ' does not exist!'
+            );
         }
 
         if (!is_writable($path)) {
-            throw new LoggerException('Directory ' . $path . ' is not writable!');
+            throw new LoggerException(
+                'Directory ' . $path . ' is not writable!'
+            );
         }
 
         $this->path = $path;
 
         $defaults = [
             'extension' => 'log',
-            'prefix' => ''
+            'prefix'    => '',
         ];
 
         $this->options = array_merge($defaults, $options);
@@ -99,7 +116,9 @@ class Multiple extends FileLogger implements AdapterInterface
      */
     public function begin()
     {
-        throw new LoggerException('Multiple file logger transactions are not implemented yet!');
+        throw new LoggerException(
+            'Multiple file logger transactions are not implemented yet!'
+        );
     }
 
     /**
@@ -109,7 +128,9 @@ class Multiple extends FileLogger implements AdapterInterface
      */
     public function commit()
     {
-        throw new LoggerException('Multiple file logger transactions are not implemented yet!');
+        throw new LoggerException(
+            'Multiple file logger transactions are not implemented yet!'
+        );
     }
 
     /**
@@ -119,7 +140,9 @@ class Multiple extends FileLogger implements AdapterInterface
      */
     public function rollback()
     {
-        throw new LoggerException('Multiple file logger transactions are not implemented yet!');
+        throw new LoggerException(
+            'Multiple file logger transactions are not implemented yet!'
+        );
     }
 
     /**
@@ -140,17 +163,21 @@ class Multiple extends FileLogger implements AdapterInterface
             case Logger::CRITICAL:
                 // emergence, critical
                 return 'critical';
+
             case Logger::ALERT:
             case Logger::ERROR:
                 // error, alert
                 return 'error';
+
             case Logger::WARNING:
                 // warning
                 return 'warning';
+
             case Logger::NOTICE:
             case Logger::INFO:
                 // info, notice
                 return 'info';
+
             case Logger::DEBUG:
             case Logger::CUSTOM:
             case Logger::SPECIAL:

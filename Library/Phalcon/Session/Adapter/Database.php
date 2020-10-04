@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -17,6 +18,7 @@
   |          Nikita Vershinin <endeveit@gmail.com>                         |
   +------------------------------------------------------------------------+
 */
+
 namespace Phalcon\Session\Adapter;
 
 use Phalcon\Db;
@@ -24,6 +26,7 @@ use Phalcon\Session\Adapter;
 use Phalcon\Session\AdapterInterface;
 use Phalcon\Session\Exception;
 use Phalcon\Db\AdapterInterface as DbAdapter;
+use Phalcon\Db\Column;
 
 /**
  * Phalcon\Session\Adapter\Database
@@ -54,7 +57,9 @@ class Database extends Adapter implements AdapterInterface
         unset($options['db']);
 
         if (!isset($options['table']) || empty($options['table']) || !is_string($options['table'])) {
-            throw new Exception("Parameter 'table' is required and it must be a non empty string");
+            throw new Exception(
+                "Parameter 'table' is required and it must be a non empty string"
+            );
         }
 
         $columns = ['session_id', 'data', 'created_at', 'modified_at'];
@@ -84,7 +89,8 @@ class Database extends Adapter implements AdapterInterface
      */
     public function open()
     {
-        return true;
+        $this->_started = true;
+        return $this->isStarted();
     }
 
     /**
@@ -94,7 +100,9 @@ class Database extends Adapter implements AdapterInterface
      */
     public function close()
     {
-        return false;
+        $this->_started = false;
+
+        return $this->isStarted();
     }
 
     /**
@@ -106,7 +114,11 @@ class Database extends Adapter implements AdapterInterface
     public function read($sessionId)
     {
         $maxLifetime = (int) ini_get('session.gc_maxlifetime');
-
+        
+        if (!$this->isStarted()) {
+            return false;
+        }
+        
         $options = $this->getOptions();
         $row = $this->connection->fetchOne(
             sprintf(
@@ -119,7 +131,8 @@ class Database extends Adapter implements AdapterInterface
                 $maxLifetime
             ),
             Db::FETCH_NUM,
-            [$sessionId, time()]
+            [$sessionId, time()],
+            [Column::BIND_PARAM_STR, Column::BIND_PARAM_INT]
         );
 
         if (empty($row)) {
@@ -148,8 +161,8 @@ class Database extends Adapter implements AdapterInterface
             Db::FETCH_NUM,
             [$sessionId]
         );
-
-        if (!empty($row) && intval($row[0]) > 0) {
+        
+        if ($row[0] > 0) {
             return $this->connection->execute(
                 sprintf(
                     'UPDATE %s SET %s = ?, %s = ? WHERE %s = ?',
@@ -160,19 +173,23 @@ class Database extends Adapter implements AdapterInterface
                 ),
                 [$data, time(), $sessionId]
             );
-        } else {
-            return $this->connection->execute(
-                sprintf(
-                    'INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, NULL)',
-                    $this->connection->escapeIdentifier($options['table']),
-                    $this->connection->escapeIdentifier($options['column_session_id']),
-                    $this->connection->escapeIdentifier($options['column_data']),
-                    $this->connection->escapeIdentifier($options['column_created_at']),
-                    $this->connection->escapeIdentifier($options['column_modified_at'])
-                ),
-                [$sessionId, $data, time()]
-            );
         }
+        
+        if (!$this->isStarted()) {
+            return false;
+        }
+            
+        return $this->connection->execute(
+            sprintf(
+                'INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, NULL)',
+                $this->connection->escapeIdentifier($options['table']),
+                $this->connection->escapeIdentifier($options['column_session_id']),
+                $this->connection->escapeIdentifier($options['column_data']),
+                $this->connection->escapeIdentifier($options['column_created_at']),
+                $this->connection->escapeIdentifier($options['column_modified_at'])
+            ),
+            [$sessionId, $data, time()]
+        );
     }
 
     /**
@@ -201,7 +218,7 @@ class Database extends Adapter implements AdapterInterface
             [$session_id]
         );
 
-        return $result && session_destroy();
+        return $result;
     }
 
     /**

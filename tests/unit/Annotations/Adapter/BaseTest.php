@@ -2,9 +2,8 @@
 
 namespace Phalcon\Test\Annotations\Adapter;
 
-use UnitTester;
 use ReflectionProperty;
-use Codeception\TestCase\Test;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 use Phalcon\Annotations\Adapter\Base;
 use Phalcon\Cache\Backend\Memory as CacheBackend;
 use Phalcon\Cache\Frontend\Data as CacheFrontend;
@@ -28,17 +27,13 @@ use Phalcon\Cache\Frontend\Data as CacheFrontend;
  */
 class BaseTest extends Test
 {
-    /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
     protected function getObject($options)
     {
         return $this->getMockForAbstractClass(
             Base::class,
-            ['options' => $options],
+            [
+                'options' => $options,
+            ],
             '',
             true,
             true,
@@ -58,12 +53,21 @@ class BaseTest extends Test
         $mock = $this->getObject(null);
         $mock->expects($this->once())->method('prepareKey')->willReturn($key);
 
-        $cacheBackend = new CacheBackend(new CacheFrontend(['lifetime' => 86400]));
+        $cacheBackend = new CacheBackend(
+            new CacheFrontend(
+                [
+                    'lifetime' => 86400,
+                ]
+            )
+        );
 
         $mock->expects($this->once())->method('getCacheBackend')->willReturn($cacheBackend);
         $mock->write($key, $data, 86400);
 
-        $this->assertEquals($data, $cacheBackend->get($key));
+        $this->assertEquals(
+            $data,
+            $cacheBackend->get($key)
+        );
     }
 
     /**
@@ -74,14 +78,25 @@ class BaseTest extends Test
     public function testReadAnnotations($key, $data)
     {
         $mock = $this->getObject(null);
+
         $mock->expects($this->once())->method('prepareKey')->willReturn($key);
 
-        $cacheBackend = new CacheBackend(new CacheFrontend(['lifetime' => 86400]));
+        $cacheBackend = new CacheBackend(
+            new CacheFrontend(
+                [
+                    'lifetime' => 86400,
+                ]
+            )
+        );
+
         $cacheBackend->save($key, $data, 86400);
 
         $mock->expects($this->once())->method('getCacheBackend')->willReturn($cacheBackend);
 
-        $this->assertEquals($data, $mock->read($key));
+        $this->assertEquals(
+            $data,
+            $mock->read($key)
+        );
     }
 
     /**
@@ -92,46 +107,142 @@ class BaseTest extends Test
     public function testConstructor($options, $expected)
     {
         $mock = $this->getObject($options);
-        $reflectedProperty = new ReflectionProperty(get_class($mock), 'options');
+
+        $reflectedProperty = new ReflectionProperty(
+            get_class($mock),
+            'options'
+        );
+
         $reflectedProperty->setAccessible(true);
-        $this->assertEquals($expected, $reflectedProperty->getValue($mock));
+
+        $this->assertEquals(
+            $expected,
+            $reflectedProperty->getValue($mock)
+        );
     }
 
     public function testHasDefaultLifetime()
     {
-        $this->assertClassHasStaticAttribute('defaultLifetime', Base::class);
+        $this->assertClassHasStaticAttribute(
+            'defaultLifetime',
+            Base::class
+        );
     }
 
     public function testHasDefaultPrefix()
     {
-        $this->assertClassHasStaticAttribute('defaultPrefix', Base::class);
+        $this->assertClassHasStaticAttribute(
+            'defaultPrefix',
+            Base::class
+        );
     }
 
     public function testHasOptions()
     {
-        $this->assertClassHasAttribute('options', Base::class);
+        $this->assertClassHasAttribute(
+            'options',
+            Base::class
+        );
     }
 
     public function providerReadWrite()
     {
         return [
-            ['test1', 'data1'],
-            ['test1', (object) ['key' => 'value']],
-            ['test1', ['key' => 'value']],
-            ['test1', null]
+            [
+                'test1',
+                'data1',
+            ],
+
+            [
+                'test1',
+                (object) ['key' => 'value'],
+            ],
+
+            [
+                'test1',
+                [
+                    'key' => 'value',
+                ],
+            ],
+
+            [
+                'test1',
+                null,
+            ],
         ];
     }
 
     public function providerConstructor()
     {
         return [
-            [['lifetime' => 23],                      ['lifetime' => 23, 'prefix' => '']],
-            [['prefix' => 'test_'],                   ['lifetime' => 8600, 'prefix' => 'test_']],
-            [['randomValue' => 'test_'],              ['randomValue' => 'test_', 'lifetime' => 8600, 'prefix' => '']],
-            [[123 => 'test_'],                        [123 => 'test_', 'lifetime' => 8600, 'prefix' => '']],
-            [['lifetime' => 24, 'prefix' => 'test_'], ['lifetime' => 24, 'prefix' => 'test_']],
-            [[],                                      ['lifetime' => 8600, 'prefix' => '']],
-            [null,                                    ['lifetime' => 8600, 'prefix' => '']]
+            [
+                [
+                    'lifetime' => 23,
+                ],
+                [
+                    'lifetime' => 23,
+                    'prefix'   => '',
+                ],
+            ],
+
+            [
+                [
+                    'prefix' => 'test_',
+                ],
+                [
+                    'lifetime' => 8600,
+                    'prefix'   => 'test_',
+                ],
+            ],
+
+            [
+                [
+                    'randomValue' => 'test_',
+                ],
+                [
+                    'randomValue' => 'test_',
+                    'lifetime'    => 8600,
+                    'prefix'      => '',
+                ],
+            ],
+
+            [
+                [
+                    123 => 'test_',
+                ],
+                [
+                    123        => 'test_',
+                    'lifetime' => 8600,
+                    'prefix'   => '',
+                ],
+            ],
+
+            [
+                [
+                    'lifetime' => 24,
+                    'prefix'   => 'test_',
+                ],
+                [
+                    'lifetime' => 24,
+                    'prefix'   => 'test_',
+                ],
+            ],
+
+            [
+                [],
+                [
+                    'lifetime' => 8600,
+                    'prefix'   => '',
+                ],
+            ],
+
+            [
+                null,
+                [
+                    'lifetime' => 8600,
+                    'prefix'   => '',
+                ],
+            ],
         ];
     }
 }

@@ -1,12 +1,13 @@
 <?php
+
 /*
   +------------------------------------------------------------------------+
   | Phalcon Framework                                                      |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file docs/LICENSE.txt.                        |
+  | with this package in the file LICENSE.txt.                             |
   |                                                                        |
   | If you did not receive a copy of the license and are unable to         |
   | obtain it through the world-wide-web, please send an email             |
@@ -24,7 +25,7 @@ use Phalcon\Translate\Adapter;
 use Phalcon\Translate\AdapterInterface;
 use Phalcon\Translate\Exception;
 
-class Database extends Base implements AdapterInterface, \ArrayAccess
+class Database extends Adapter implements AdapterInterface, \ArrayAccess
 {
     /**
      * @var array
@@ -42,13 +43,6 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
      * @var array
      */
     protected $stmtSelect;
-
-    /**
-     * Use ICU MessageFormatter to parse message
-     *
-     * @var boolean
-     */
-    protected $useIcuMessageFormatter = false;
 
     /**
      * Class constructor.
@@ -70,14 +64,6 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
             throw new Exception("Parameter 'language' is required");
         }
 
-        if (isset($options['useIcuMessageFormatter'])) {
-            if (!class_exists('\MessageFormatter')) {
-                throw new Exception('"MessageFormatter" class is required');
-            }
-
-            $this->useIcuMessageFormatter = (boolean) $options['useIcuMessageFormatter'];
-        }
-
         $this->stmtSelect = sprintf(
             'SELECT value FROM %s WHERE language = :language AND key_name = :key_name',
             $options['table']
@@ -89,6 +75,8 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
         );
 
         $this->options = $options;
+        
+        parent::__construct($options);
     }
 
     /**
@@ -100,25 +88,18 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
      */
     public function query($translateKey, $placeholders = null)
     {
-        $options     = $this->options;
-        $translation = $options['db']->fetchOne(
+        $translation = $this->options['db']->fetchOne(
             $this->stmtSelect,
             Db::FETCH_ASSOC,
-            ['language' => $options['language'], 'key_name' => $translateKey]
+            [
+                'language' => $this->options['language'],
+                'key_name' => $translateKey,
+            ]
         );
-        $value       = empty($translation['value']) ? $translateKey : $translation['value'];
 
-        if (is_array($placeholders) && !empty($placeholders)) {
-            if (true === $this->useIcuMessageFormatter) {
-                $value = \MessageFormatter::formatMessage($options['language'], $value, $placeholders);
-            } else {
-                foreach ($placeholders as $placeHolderKey => $placeHolderValue) {
-                    $value = str_replace('%' . $placeHolderKey . '%', $placeHolderValue, $value);
-                }
-            }
-        }
+        $value = empty($translation['value']) ? $translateKey : $translation['value'];
 
-        return $value;
+        return $this->replacePlaceholders($value, $placeholders);
     }
 
     /**
@@ -143,12 +124,13 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
      */
     public function exists($translateKey)
     {
-        $options = $this->options;
-
-        $result = $options['db']->fetchOne(
+        $result = $this->options['db']->fetchOne(
             $this->stmtExists,
             Db::FETCH_ASSOC,
-            ['language' => $options['language'], 'key_name' => $translateKey]
+            [
+                'language' => $this->options['language'],
+                'key_name' => $translateKey,
+            ]
         );
 
         return !empty($result['count']);
@@ -163,10 +145,13 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
      */
     public function add($translateKey, $message)
     {
-        $options = $this->options;
-        $data = ['language' => $options['language'], 'key_name' => $translateKey, 'value' => $message];
+        $data = [
+            'language' => $this->options['language'],
+            'key_name' => $translateKey,
+            'value'    => $message,
+        ];
 
-        return $options['db']->insert($options['table'], array_values($data), array_keys($data));
+        return $this->options['db']->insert($this->options['table'], array_values($data), array_keys($data));
     }
 
     /**
@@ -180,10 +165,18 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
     {
         $options = $this->options;
 
-        return $options['db']->update($options['table'], ['value'], [$message], [
-            'conditions' => 'key_name = ? AND language = ?',
-            'bind' => ['key' => $translateKey, 'lang' => $options['language']]
-        ]);
+        return $options['db']->update(
+            $options['table'],
+            ['value'],
+            [$message],
+            [
+                'conditions' => 'key_name = ? AND language = ?',
+                'bind' => [
+                    'key'  => $translateKey,
+                    'lang' => $options['language'],
+                ]
+            ]
+        );
     }
 
     /**
@@ -199,7 +192,10 @@ class Database extends Base implements AdapterInterface, \ArrayAccess
         return $options['db']->delete(
             $options['table'],
             'key_name = :key AND language = :lang',
-            ['key' => $translateKey, 'lang' => $options['language']]
+            [
+                'key'  => $translateKey,
+                'lang' => $options['language'],
+            ]
         );
     }
 

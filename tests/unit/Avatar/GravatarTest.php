@@ -3,9 +3,8 @@
 namespace Phalcon\Test\Avatar;
 
 use Phalcon\Avatar\Gravatar;
-use Codeception\TestCase\Test;
+use Phalcon\Test\Codeception\UnitTestCase as Test;
 use Phalcon\Config;
-use UnitTester;
 
 /**
  * \Phalcon\Test\Avatar\GravatarTest
@@ -27,26 +26,6 @@ use UnitTester;
 class GravatarTest extends Test
 {
     /**
-     * UnitTester Object
-     * @var UnitTester
-     */
-    protected $tester;
-
-    /**
-     * executed before each test
-     */
-    protected function _before()
-    {
-    }
-
-    /**
-     * executed after each test
-     */
-    protected function _after()
-    {
-    }
-
-    /**
      * @dataProvider incorrectConfigProvider
      * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage Config must be either an array or \Phalcon\Config instance
@@ -67,44 +46,89 @@ class GravatarTest extends Test
             'object'   => [new \stdClass()],
             'float'    => [microtime(true)],
             'int'      => [PHP_INT_MAX],
-            'callable' => [function () {}],
-            'resource' => [tmpfile()],
+            'callable' => [
+                function () {
+                },
+            ],
+            'resource' => [
+                tmpfile(),
+            ],
         ];
     }
 
     public function testShouldUseConfigInstance()
     {
-        $gravatar = new Gravatar(new Config([]));
-        $this->assertInstanceOf('Phalcon\Avatar\Gravatar', $gravatar);
+        $gravatar = new Gravatar(
+            new Config(
+                []
+            )
+        );
+
+        $this->assertInstanceOf(
+            Gravatar::class,
+            $gravatar
+        );
     }
 
     public function testShouldUseArrayAsConfig()
     {
-        $gravatar = new Gravatar([]);
-        $this->assertInstanceOf('Phalcon\Avatar\Gravatar', $gravatar);
+        $gravatar = new Gravatar(
+            []
+        );
+
+        $this->assertInstanceOf(
+            Gravatar::class,
+            $gravatar
+        );
     }
 
     public function testShouldSetUseDefaultValues()
     {
         $gravatar = new Gravatar([]);
 
-        $this->assertEquals(Gravatar::RATING_G, $gravatar->getRating());
-        $this->assertEquals(80, $gravatar->getSize());
-        $this->assertNotTrue($gravatar->isUseSecureURL());
+        $this->assertEquals(
+            Gravatar::RATING_G,
+            $gravatar->getRating()
+        );
+
+        $this->assertEquals(
+            80,
+            $gravatar->getSize()
+        );
+
+        $this->assertNotTrue(
+            $gravatar->isUseSecureURL()
+        );
     }
 
     public function testShouldSetOptionsThroughConfig()
     {
-        $gravatar = new Gravatar([
-            'default_image'  => 'retro',
-            'rating'         => 'x',
-            'size'           => 60,
-            'use_https'      => true
-        ]);
+        $gravatar = new Gravatar(
+            [
+                'default_image' => 'retro',
+                'rating'        => 'x',
+                'size'          => 60,
+                'use_https'     => true,
+            ]
+        );
 
-        $this->assertEquals('retro', $gravatar->getDefaultImage());
-        $this->assertEquals(Gravatar::RATING_X, $gravatar->getRating());
-        $this->assertEquals(60, $gravatar->getSize());
-        $this->assertTrue($gravatar->isUseSecureURL());
+        $this->assertEquals(
+            'retro',
+            $gravatar->getDefaultImage()
+        );
+
+        $this->assertEquals(
+            Gravatar::RATING_X,
+            $gravatar->getRating()
+        );
+
+        $this->assertEquals(
+            60,
+            $gravatar->getSize()
+        );
+
+        $this->assertTrue(
+            $gravatar->isUseSecureURL()
+        );
     }
 }

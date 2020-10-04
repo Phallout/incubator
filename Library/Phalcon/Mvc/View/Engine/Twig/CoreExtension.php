@@ -1,14 +1,22 @@
 <?php
-/**
- * Phalcon Framework
- * This source file is subject to the New BSD License that is bundled
- * with this package in the file docs/LICENSE.txt.
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@phalconphp.com so we can send you a copy immediately.
- *
- * @author Nikita Vershinin <endeveit@gmail.com>
- */
+
+/*
+  +------------------------------------------------------------------------+
+  | Phalcon Framework                                                      |
+  +------------------------------------------------------------------------+
+  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+  +------------------------------------------------------------------------+
+  | This source file is subject to the New BSD License that is bundled     |
+  | with this package in the file LICENSE.txt.                             |
+  |                                                                        |
+  | If you did not receive a copy of the license and are unable to         |
+  | obtain it through the world-wide-web, please send an email             |
+  | to license@phalconphp.com so we can send you a copy immediately.       |
+  +------------------------------------------------------------------------+
+  | Authors: Nikita Vershinin <endeveit@gmail.com>                         |
+  +------------------------------------------------------------------------+
+*/
+
 namespace Phalcon\Mvc\View\Engine\Twig;
 
 /**
@@ -42,8 +50,16 @@ class CoreExtension extends \Twig_Extension
         ];
 
         return [
-            'assetsOutputCss' => new \Twig_Function_Method($this, 'functionAssetsOutputCss', $options),
-            'assetsOutputJs'  => new \Twig_Function_Method($this, 'functionAssetsOutputJs', $options),
+            'assetsOutputCss' => new \Twig_SimpleFunction(
+                'assetsOutputCss',
+                [$this, 'functionAssetsOutputCss'],
+                $options
+            ),
+            'assetsOutputJs' => new \Twig_SimpleFunction(
+                'assetsOutputJs',
+                [$this, 'functionAssetsOutputJs'],
+                $options
+            )
         ];
     }
 
